@@ -7,7 +7,8 @@ import (
 	"os"
 	"os/exec"
 	"regexp"
-	"strings"
+
+	"github.com/blang/semver"
 )
 
 var (
@@ -16,7 +17,7 @@ var (
 )
 
 func gitCloneRepo(path string) error {
-	cmd := exec.Command("git", "clone", fmt.Sprintf("https://%s:%s@github.com/Fank/docker_factorio_server.git", os.Getenv("GITHUB_USER"), os.Getenv("GITHUB_TOKEN")), path)
+	cmd := exec.Command("git", "clone", fmt.Sprintf("https://%s:%s@github.com/%s/%s.git", os.Getenv("GITHUB_USER"), os.Getenv("GITHUB_TOKEN"), githubRepoOwner, githubRepoName), path)
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		return errors.New(string(output))
@@ -54,15 +55,14 @@ func gitPushBranch(path string, branch string) error {
 	return nil
 }
 
-func editDockerfile(path string, version string, checksum string) error {
-	parts := strings.Split(version, ".")
-	filename := fmt.Sprintf("%s/%s.%s/Dockerfile", path, parts[0], parts[1])
+func editDockerfile(path string, version semver.Version, checksum string) error {
+	filename := fmt.Sprintf("%s/%d.%d/Dockerfile", path, version.Major, version.Minor)
 
 	file, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return err
 	}
-	file = reDockerfileVersion.ReplaceAll(file, []byte("${1}"+version))
+	file = reDockerfileVersion.ReplaceAll(file, []byte("${1}"+version.String()))
 	file = reDockerfileSHA1.ReplaceAll(file, []byte("${1}"+checksum))
 
 	err = ioutil.WriteFile(filename, file, 0666)
@@ -73,20 +73,18 @@ func editDockerfile(path string, version string, checksum string) error {
 	return nil
 }
 
-func editReadme(path string, version string) error {
-	parts := strings.Split(version, ".")
-
+func editReadme(path string, version semver.Version) error {
 	file, err := ioutil.ReadFile(path + "/README.md")
 	if err != nil {
 		return err
 	}
 
-	reReadmeVersion, err := regexp.Compile(fmt.Sprintf("(`)%s\\.%s\\.\\d+(`)", parts[0], parts[1]))
+	reReadmeVersion, err := regexp.Compile(fmt.Sprintf("(`)%d\\.%d\\.\\d+(`)", version.Major, version.Minor))
 	if err != nil {
 		return err
 	}
 
-	file = reReadmeVersion.ReplaceAll(file, []byte("${1}"+version+"${2}"))
+	file = reReadmeVersion.ReplaceAll(file, []byte("${1}"+version.String()+"${2}"))
 
 	err = ioutil.WriteFile(path+"/README.md", file, 0666)
 	if err != nil {

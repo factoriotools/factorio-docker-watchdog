@@ -3,8 +3,10 @@ package main
 import (
 	"crypto/sha1"
 	"encoding/hex"
+	"encoding/json"
 	"io"
 	"net/http"
+	"time"
 )
 
 func factorioGetChecksum(url string) (string, error) {
@@ -31,4 +33,28 @@ func factorioGetChecksum(url string) (string, error) {
 	returnSHA1String = hex.EncodeToString(hashInBytes)
 
 	return returnSHA1String, nil
+}
+
+var myClient = &http.Client{Timeout: 10 * time.Second}
+
+func GetAvailableVersions() (AvailableVersions, error) {
+	var availableVersions AvailableVersions
+	r, err := myClient.Get("https://www.factorio.com/updater/get-available-versions?apiVersion=2")
+	if err != nil {
+		return availableVersions, err
+	}
+	defer r.Body.Close()
+
+	err = json.NewDecoder(r.Body).Decode(&availableVersions)
+
+	return availableVersions, err
+}
+
+type AvailableVersions struct {
+	CoreLinuxHeadless64 []AvailableVersionsStep `json:"core-linux_headless64"`
+}
+type AvailableVersionsStep struct {
+	From   string
+	To     string
+	Stable string
 }
