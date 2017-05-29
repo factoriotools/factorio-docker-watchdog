@@ -1,9 +1,8 @@
 package main
 
 import (
-	"os"
-
 	"fmt"
+	"os"
 
 	"github.com/blang/semver"
 	"github.com/robfig/cron"
@@ -16,7 +15,7 @@ func main() {
 	latestVersionProceeded = map[string]string{}
 	checkVersion()
 	c := cron.New()
-	c.AddFunc("@every 1m", func() { checkVersion() })
+	c.AddFunc("@every 5m", func() { checkVersion() })
 	c.Run()
 }
 
@@ -77,6 +76,7 @@ func checkVersion() {
 		key := fmt.Sprintf("%d.%d", tagVersion.Major, tagVersion.Minor)
 		if val, ok := latestVersionProceeded[key]; ok {
 			if val == tagVersion.String() {
+				logrus.Info("Delete ", tagVersion.String(), " from latest proceeded")
 				delete(latestVersionProceeded, key)
 			}
 		}
@@ -88,10 +88,11 @@ func checkVersion() {
 		}
 		key := fmt.Sprintf("%d.%d", version.Major, version.Minor)
 
+		logrus.Info(latestVersionProceeded)
 		if val, ok := latestVersionProceeded[key]; ok {
-			logrus.Debug("OK ", val)
+			logrus.Info("OK ", val)
 			if val == version.String() {
-				logrus.Debug("Version exists in cache SKIP")
+				logrus.Info("Version exists in cache SKIP")
 				continue
 			}
 		}
@@ -139,7 +140,7 @@ func updateVersion(version semver.Version) {
 	if err != nil {
 		logrus.Panic(err)
 	}
-	logrus.Info("Commited")
+	logrus.Info("Committed")
 
 	err = gitPushBranch(pathRepo, "update-"+version.String())
 	if err != nil {

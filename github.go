@@ -30,7 +30,7 @@ func createPullRequest(version semver.Version, branch string) {
 	title := fmt.Sprintf("Updated to version %s", version.String())
 	base := "master"
 	modify := true
-	a, b, err := client.PullRequests.Create(ctx, githubRepoOwner, githubRepoName, &github.NewPullRequest{
+	_, _, err := client.PullRequests.Create(ctx, githubRepoOwner, githubRepoName, &github.NewPullRequest{
 		Title:               &title,
 		Head:                &branch,
 		Base:                &base,
@@ -39,6 +39,4 @@ func createPullRequest(version semver.Version, branch string) {
 	if err != nil {
 		logrus.Panic(err)
 	}
-	fmt.Print(a)
-	fmt.Print(b)
 }
