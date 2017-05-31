@@ -36,7 +36,7 @@ func gitCheckoutBranch(path string, branch string) error {
 }
 
 func gitCreateCommit(path string, commitMessage string) error {
-	cmd := exec.Command("git", "commit", "-am", "fk_update")
+	cmd := exec.Command("git", "commit", "-am", commitMessage)
 	cmd.Dir = path
 	output, err := cmd.CombinedOutput()
 	if err != nil {

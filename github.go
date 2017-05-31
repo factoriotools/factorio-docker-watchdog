@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	githubRepoOwner = "Fank"
+	githubRepoOwner = "dtandersen"
 	githubRepoName  = "docker_factorio_server"
 )
 

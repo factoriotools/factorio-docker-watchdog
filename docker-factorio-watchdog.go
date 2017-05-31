@@ -136,7 +136,7 @@ func updateVersion(version semver.Version) {
 	}
 	logrus.Info("Edited README")
 
-	err = gitCreateCommit(pathRepo, "update")
+	err = gitCreateCommit(pathRepo, "update to "+version.String())
 	if err != nil {
 		logrus.Panic(err)
 	}
