@@ -13,6 +13,12 @@ var latestVersionProceeded map[string]string
 
 func main() {
 	latestVersionProceeded = map[string]string{}
+
+	err := gitSetupCredentials()
+	if err != nil {
+		logrus.Panic(err)
+	}
+
 	checkVersion()
 	c := cron.New()
 	c.AddFunc("@every 5m", func() { checkVersion() })

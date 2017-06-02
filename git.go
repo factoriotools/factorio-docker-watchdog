@@ -16,6 +16,22 @@ var (
 	reDockerfileSHA1    = regexp.MustCompile(`(SHA1=)([a-z0-9]+)`)
 )
 
+func gitSetupCredentials() error {
+	cmd := exec.Command("git", "config", "--global", "user.email", os.Getenv("GIT_EMAIL"))
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return errors.New(string(output))
+	}
+
+	cmd = exec.Command("git", "config", "--global", "user.name", os.Getenv("GIT_NAME"))
+	output, err = cmd.CombinedOutput()
+	if err != nil {
+		return errors.New(string(output))
+	}
+
+	return nil
+}
+
 func gitCloneRepo(path string) error {
 	cmd := exec.Command("git", "clone", fmt.Sprintf("https://%s:%s@github.com/%s/%s.git", os.Getenv("GITHUB_USER"), os.Getenv("GITHUB_TOKEN"), githubRepoOwner, githubRepoName), path)
 	output, err := cmd.CombinedOutput()
