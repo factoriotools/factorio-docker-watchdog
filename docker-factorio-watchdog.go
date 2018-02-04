@@ -112,6 +112,10 @@ func updateVersion(version semver.Version) {
 	latestVersionProceeded[fmt.Sprintf("%d.%d", version.Major, version.Minor)] = version.String()
 	pathRepo := fmt.Sprintf("/tmp/factorio-%s-repo", version)
 
+	defer func() {
+		noticeDiscord(version)
+	}()
+
 	err := gitCloneRepo(pathRepo)
 	if err != nil {
 		logrus.Panic(err)
