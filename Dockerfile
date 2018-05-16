@@ -6,7 +6,7 @@ RUN apk add --no-cache alpine-sdk \
     && go build -a -installsuffix cgo -o app .
 
 FROM alpine:latest
-RUN adduser -D -u 678 watchdog
+RUN adduser -D -u 678 watchdog && apk add --no-cache alpine-sdk
 USER watchdog
 
 # Add app
