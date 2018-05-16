@@ -123,11 +123,11 @@ func updateVersion(version semver.Version) {
 	defer os.RemoveAll(pathRepo)
 	logrus.Info("Cloned repo")
 
-	err = gitCheckoutBranch(pathRepo, "update-"+version.String())
-	if err != nil {
-		logrus.Panic(err)
-	}
-	logrus.Info("Checkout branch ", version)
+	//err = gitCheckoutBranch(pathRepo, "update-"+version.String())
+	//if err != nil {
+	//	logrus.Panic(err)
+	//}
+	//logrus.Info("Checkout branch ", version)
 
 	checksum, err := factorioGetChecksum(fmt.Sprintf("https://www.factorio.com/get-download/%s/headless/linux64", version))
 	if err != nil {
@@ -158,5 +158,11 @@ func updateVersion(version semver.Version) {
 	}
 	logrus.Info("Pushed")
 
-	createPullRequest(version, "update-"+version.String())
+	err = gitTagAndPush(pathRepo, version.String())
+	if err != nil {
+		logrus.Panic(err)
+	}
+	logrus.Info("Tagged")
+
+	//createPullRequest(version, "update-"+version.String())
 }

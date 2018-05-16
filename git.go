@@ -71,6 +71,25 @@ func gitPushBranch(path string, branch string) error {
 	return nil
 }
 
+func gitTagAndPush(path string, tagName string) error {
+	cmd := exec.Command("git", "tag", tagName)
+	cmd.Dir = path
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return errors.New(string(output))
+	}
+
+
+	cmd = exec.Command("git", "push", "origin", tagName)
+	cmd.Dir = path
+	output, err = cmd.CombinedOutput()
+	if err != nil {
+		return errors.New(string(output))
+	}
+	return nil
+
+}
+
 func editDockerfile(path string, version semver.Version, checksum string) error {
 	filename := fmt.Sprintf("%s/%d.%d/Dockerfile", path, version.Major, version.Minor)
 
