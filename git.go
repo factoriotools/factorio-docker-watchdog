@@ -61,6 +61,16 @@ func gitCreateCommit(path string, commitMessage string) error {
 	return nil
 }
 
+func gitPush(path string) error {
+	cmd := exec.Command("git", "push")
+	cmd.Dir = path
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return errors.New(string(output))
+	}
+	return nil
+}
+
 func gitPushBranch(path string, branch string) error {
 	cmd := exec.Command("git", "push", "--set-upstream", "origin", branch)
 	cmd.Dir = path
@@ -78,7 +88,6 @@ func gitTagAndPush(path string, tagName string) error {
 	if err != nil {
 		return errors.New(string(output))
 	}
-
 
 	cmd = exec.Command("git", "push", "origin", tagName)
 	cmd.Dir = path

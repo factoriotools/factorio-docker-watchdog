@@ -152,7 +152,7 @@ func updateVersion(version semver.Version) {
 	}
 	logrus.Info("Committed")
 
-	err = gitPushBranch(pathRepo, "update-"+version.String())
+	err = gitPush(pathRepo)
 	if err != nil {
 		logrus.Panic(err)
 	}
