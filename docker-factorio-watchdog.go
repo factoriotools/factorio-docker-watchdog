@@ -89,7 +89,7 @@ func checkVersion() {
 	}
 
 	for _, version := range lastVersions {
-		if version.Major == 0 && version.Minor < 13 {
+		if version.Major == 0 && version.Minor < 16 {
 			continue
 		}
 		key := fmt.Sprintf("%d.%d", version.Major, version.Minor)
