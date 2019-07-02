@@ -1,4 +1,4 @@
-FROM golang:1.10-alpine AS build
+FROM golang:1.12-alpine AS build
 WORKDIR /go/src/github.com/fankserver/docker-factorio-watchdog
 RUN apk add --no-cache alpine-sdk
 COPY . .
