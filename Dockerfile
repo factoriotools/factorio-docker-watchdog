@@ -5,7 +5,7 @@ COPY . .
 RUN go get ./... &&
   go build -a -installsuffix cgo -o app .
 
-FROM alpine:latest
+FROM alpine
 RUN adduser -D -u 678 watchdog &&
   apk add --no-cache alpine-sdk
 USER watchdog
