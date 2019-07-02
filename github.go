@@ -13,9 +13,9 @@ import (
 	"golang.org/x/oauth2"
 )
 
-const (
-	githubRepoOwner = "dtandersen"
-	githubRepoName  = "docker_factorio_server"
+var (
+	githubRepoOwner = os.Getenv("GITHUB_REPO_OWNER") // current organization factoriotools
+	githubRepoName  = os.Getenv("GITHUB_REPO_NAME") // current repo factorio-docker
 )
 
 func createPullRequest(version semver.Version, branch string) {
