@@ -10,4 +10,4 @@ RUN adduser -D -u 678 watchdog && \
   apk add --no-cache --no-progress git
 USER watchdog
 COPY --from=build /go/src/github.com/factoriotools/factorio-docker-watchdog/app /app
-ENTRYPOINT ["/app"]
+CMD ["/app"]
