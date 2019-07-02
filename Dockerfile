@@ -1,8 +1,8 @@
 FROM golang:1.10-alpine AS build
 WORKDIR /go/src/github.com/fankserver/docker-factorio-watchdog
+RUN apk add --no-cache alpine-sdk
 COPY . .
-RUN apk add --no-cache alpine-sdk &&
-  go get ./... &&
+RUN go get ./... &&
   go build -a -installsuffix cgo -o app .
 
 FROM alpine:latest
