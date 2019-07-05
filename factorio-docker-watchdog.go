@@ -13,8 +13,13 @@ var latestVersionProceeded map[string]string
 
 func main() {
 	latestVersionProceeded = map[string]string{}
+	versionFill, err := semver.Make(os.Getenv("VERSION_FIX"))
+	if err != nil {
+		logrus.Error(err)
+	}
+	latestVersionProceeded[fmt.Sprintf("%d.%d", versionFill.Major, versionFill.Minor)] = versionFill.String()
 
-	err := gitSetupCredentials()
+	err = gitSetupCredentials()
 	if err != nil {
 		logrus.Panic(err)
 	}
@@ -46,6 +51,7 @@ func checkVersion() {
 		versions = append(versions, v)
 	}
 	semver.Sort(versions)
+	logrus.Debug("Available versions from Factorio.com ", versions)
 
 	// Filter only latest version based on minor
 	var lastVersion semver.Version
@@ -62,9 +68,9 @@ func checkVersion() {
 		} else if i+1 == len(versions) {
 			lastVersions = append(lastVersions, version)
 		}
-
 		lastVersion = version
 	}
+	logrus.Info("last version of each major", lastVersions)
 
 	// Remove all tags which are published on docker
 	tags, err := getTags()

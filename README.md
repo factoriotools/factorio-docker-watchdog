@@ -19,3 +19,4 @@ Below you find a list with all required and optional variables.
 ### Optional
 
 - **DISCORD_WEBHOOK_URL**: Discord webhook url for announcements
+- **VERSION_FIX**: If the watchdog fails cause the repository is already on the latest version set this variable to the latest version
