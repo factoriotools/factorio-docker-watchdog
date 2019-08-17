@@ -152,7 +152,7 @@ func updateVersion(version semver.Version) {
 	}
 	logrus.Info("Edited README")
 
-	err = gitCreateCommit(pathRepo, "update to "+version.String())
+	err = gitCreateCommit(pathRepo, "Update to Factorio "+version.String())
 	if err != nil {
 		logrus.Panic(err)
 	}
