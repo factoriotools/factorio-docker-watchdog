@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/blang/semver"
 	"github.com/robfig/cron"
@@ -153,7 +154,10 @@ func updateVersion(version semver.Version) {
 	logrus.Info("Edited README")
 
 	err = gitCreateCommit(pathRepo, "Update to Factorio "+version.String())
-	if err != nil {
+	if err != nil && strings.Contains(err.Error(), "nothing to commit, working tree clean") {
+		logrus.Warnln("nothing to commit, working tree clean")
+		return
+	} else if err != nil {
 		logrus.Panic(err)
 	}
 	logrus.Info("Committed")
