@@ -9,7 +9,7 @@ type imageTag struct {
 
 func getTags() ([]imageTag, error) {
 	var tags []imageTag
-	r, err := myClient.Get("https://index.docker.io/v1/repositories/dtandersen/factorio/tags")
+	r, err := myClient.Get("https://index.docker.io/v1/repositories/factoriotools/factorio/tags")
 	if err != nil {
 		return tags, err
 	}
