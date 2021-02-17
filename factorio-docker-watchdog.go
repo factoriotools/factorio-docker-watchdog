@@ -19,6 +19,7 @@ func main() {
 		logrus.Error(err)
 	}
 	latestVersionProceeded[fmt.Sprintf("%d.%d", versionFill.Major, versionFill.Minor)] = versionFill.String()
+	latestVersionProceeded["stable"] = "0.0.0"
 
 	err = gitSetupCredentials()
 	if err != nil {
@@ -39,7 +40,17 @@ func checkVersion() {
 
 	// Get all available versions
 	versions := semver.Versions{}
+	stableVersion := semver.Version{}
 	for _, version := range version.CoreLinuxHeadless64 {
+		if version.Stable != "" {
+			v, err := semver.Make(version.Stable)
+
+			if err != nil {
+				logrus.Error(err)
+			}
+
+			stableVersion = v
+		}
 		if version.To == "" {
 			continue
 		}
@@ -53,6 +64,7 @@ func checkVersion() {
 	}
 	semver.Sort(versions)
 	logrus.Debug("Available versions from Factorio.com ", versions)
+	logrus.Debug("Stable version", stableVersion)
 
 	// Filter only latest version based on minor
 	var lastVersion semver.Version
@@ -110,11 +122,15 @@ func checkVersion() {
 			}
 		}
 
-		updateVersion(version)
+		updateVersion(version, false)
+	}
+
+	if latestVersionProceeded["stable"] != stableVersion.String() {
+		updateVersion(stableVersion, true)
 	}
 }
 
-func updateVersion(version semver.Version) {
+func updateVersion(version semver.Version, stable bool) {
 	logrus.Info("Start ", version.String())
 	latestVersionProceeded[fmt.Sprintf("%d.%d", version.Major, version.Minor)] = version.String()
 	pathRepo := fmt.Sprintf("/tmp/factorio-%s-repo", version)
@@ -142,16 +158,19 @@ func updateVersion(version semver.Version) {
 	}
 	logrus.Info("Got checksum ", checksum)
 
-	err = editDockerfile(pathRepo, version, checksum)
+	err = editDockerfile(pathRepo, version, checksum, stable)
 	if err != nil {
 		logrus.Panic(err)
 	}
 	logrus.Info("Edited Dockerfile")
-	err = editReadme(pathRepo, version)
-	if err != nil {
-		logrus.Panic(err)
+
+	if !stable {
+		err = editReadme(pathRepo, version)
+		if err != nil {
+			logrus.Panic(err)
+		}
+		logrus.Info("Edited README")
 	}
-	logrus.Info("Edited README")
 
 	err = gitCreateCommit(pathRepo, "Update to Factorio "+version.String())
 	if err != nil && strings.Contains(err.Error(), "nothing to commit, working tree clean") {

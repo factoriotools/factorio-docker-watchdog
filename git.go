@@ -99,8 +99,13 @@ func gitTagAndPush(path string, tagName string) error {
 
 }
 
-func editDockerfile(path string, version semver.Version, checksum string) error {
-	filename := fmt.Sprintf("%s/%d.%d/Dockerfile", path, version.Major, version.Minor)
+func editDockerfile(path string, version semver.Version, checksum string, stable bool) error {
+	var filename string
+	if stable {
+		filename = fmt.Sprintf("%s/stable/Dockerfile", path)
+	} else {
+		filename = fmt.Sprintf("%s/%d.%d/Dockerfile", path, version.Major, version.Minor)
+	}
 
 	file, err := ioutil.ReadFile(filename)
 	if err != nil {
