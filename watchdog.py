@@ -1,6 +1,8 @@
 import hashlib
 import re
 import json
+import time
+
 import requests
 from requests import HTTPError
 
@@ -48,14 +50,22 @@ def has_diff(new_buildinfo):
 
 def get_sha1_hash(version):
     sha1_hash = hashlib.sha1()
+    remaining_tries = 5
     try:
+        remaining_tries -= 1
         with requests.get(f"https://www.factorio.com/get-download/{version}/headless/linux64", stream=True) as r:
             r.raise_for_status()
             for chunk in r.iter_content(chunk_size=8192):
                 sha1_hash.update(chunk)
     except HTTPError as e:
         print(f"Error {e.response.status_code} on Download of version {version}")
-        exit(1)
+        if remaining_tries <= 0:
+            print("Maximum retries used, exiting now")
+            exit(1)
+
+        else:
+            print("Trying again after 2 seconds...")
+            time.sleep(2)
     return sha1_hash.hexdigest()
 
 
