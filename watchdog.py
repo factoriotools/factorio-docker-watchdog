@@ -73,10 +73,11 @@ def git_commit_and_push(commit_version):
 
 
 def get_sha1_hash(version):
-    sha1_hash = hashlib.sha1()
     remaining_tries = 5
+    sha1_hash = hashlib.sha1()
     try:
         remaining_tries -= 1
+        sha1_hash = hashlib.sha1()
         with requests.get(f"https://www.factorio.com/get-download/{version}/headless/linux64", stream=True) as r:
             r.raise_for_status()
             for chunk in r.iter_content(chunk_size=8192):
