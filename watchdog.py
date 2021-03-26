@@ -1,6 +1,7 @@
 import hashlib
 import re
 import json
+import subprocess
 import time
 
 import requests
@@ -46,6 +47,29 @@ def has_diff(new_buildinfo):
         if version not in old_buildinfo or old_buildinfo[version]["tags"] != new_buildinfo[version]["tags"]:
             return True
     return False
+
+
+def git_update():
+    # Run git fetch, checkout and reset to prepare repository
+    for args in (("git", "fetch", "--all"),
+                 ("git", "checkout", "master", "-f"),
+                 ("git", "reset", "--hard", "origin/master")):
+        try:
+            subprocess.run(args, check=True)
+        except subprocess.CalledProcessError:
+            print(f"{' '.join(args)} failed")
+            exit(1)
+
+
+def git_commit_and_push(commit_version):
+    for args in (("git", "add", "README.md", "buildinfo.json"),
+                 ("git", "commit", "-m", f"Update to Factorio {commit_version}"),
+                 ("git", "push")):
+        try:
+            subprocess.run(args, check=True)
+        except subprocess.CalledProcessError:
+            print(f"{' '.join(args)} failed")
+            exit(1)
 
 
 def get_sha1_hash(version):
@@ -94,10 +118,14 @@ def loop():
     # Add "latest" and "stable" tag
     max_prefix = get_max_prefix(highest_version_per_prefix.keys())
     max_patch = highest_version_per_prefix[max_prefix]
-    buildinfo[f"{max_prefix}.{max_patch}"]["tags"].append("latest")
+    latest_version = f"{max_prefix}.{max_patch}"
+    buildinfo[latest_version]["tags"].append("latest")
     if stable_version:
         buildinfo.setdefault(stable_version, {"tags": []})
         buildinfo[stable_version]["tags"].append("stable")
+
+    # Update Repository
+    git_update()
 
     if not has_diff(buildinfo):
         return
@@ -111,6 +139,9 @@ def loop():
 
     # Modify readme
     modify_readme(buildinfo)
+
+    # Commit changes
+    git_commit_and_push(latest_version)
 
 
 if __name__ == '__main__':
