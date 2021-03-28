@@ -7,7 +7,9 @@ RUN go get ./... && \
 
 FROM alpine:3.10
 RUN adduser -D -u 678 watchdog && \
-  apk add --no-cache --no-progress git
+  apk add --no-cache --no-progress git && \
+  mkdir /usr/watchdog && \
+  chown watchdog:watchdog /usr/watchdog
 USER watchdog
 COPY --from=build /go/src/github.com/factoriotools/factorio-docker-watchdog/app /app
 CMD ["/app"]
