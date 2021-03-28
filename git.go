@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -136,4 +137,14 @@ func editReadme(path string, version semver.Version) error {
 	}
 
 	return nil
+}
+
+func editBuildinfo(path string, buildinfo BuildInfo) error {
+	b, err := json.MarshalIndent(buildinfo.Versions, "", "  ")
+	if err != nil {
+		return err
+	}
+
+	err = ioutil.WriteFile(path+"/buildinfo.json", b, 0666)
+	return err
 }

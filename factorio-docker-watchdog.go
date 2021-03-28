@@ -10,17 +10,8 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-var latestVersionProceeded map[string]string
-
 func main() {
-	latestVersionProceeded = map[string]string{}
-	versionFill, err := semver.Make(os.Getenv("VERSION_FIX"))
-	if err != nil {
-		logrus.Error(err)
-	}
-	latestVersionProceeded[fmt.Sprintf("%d.%d", versionFill.Major, versionFill.Minor)] = versionFill.String()
-
-	err = gitSetupCredentials()
+	err := gitSetupCredentials()
 	if err != nil {
 		logrus.Panic(err)
 	}
@@ -32,36 +23,55 @@ func main() {
 }
 
 func checkVersion() {
-	version, err := GetAvailableVersions()
+	availableVersions, err := GetAvailableVersions()
 	if err != nil {
 		logrus.Panic(err)
 	}
 
 	// Get all available versions
 	versions := semver.Versions{}
-	for _, version := range version.CoreLinuxHeadless64 {
-		if version.To == "" {
-			continue
-		}
-		v, err := semver.Make(version.To)
-		if err != nil {
-			logrus.Error(err)
-			continue
-		}
+	var stableVersion *semver.Version
+	for _, version := range availableVersions.CoreLinuxHeadless64 {
+		if version.Stable != "" {
+			v, err := semver.Make(version.Stable)
+			if err != nil {
+				logrus.Error(err)
+				continue
+			}
 
-		versions = append(versions, v)
+			stableVersion = &v
+		}
+		if version.To != "" {
+			v, err := semver.Make(version.To)
+			if err != nil {
+				logrus.Error(err)
+				continue
+			}
+
+			versions = append(versions, v)
+		}
 	}
 	semver.Sort(versions)
 	logrus.Debug("Available versions from Factorio.com ", versions)
 
 	// Filter only latest version based on minor
 	var lastVersion semver.Version
+	highestMajor := make(map[uint64]semver.Version)
+	highestMinor := make(map[string]semver.Version)
 	firstRun := true
 	lastVersions := semver.Versions{}
+
 	for i, version := range versions {
 		if firstRun {
 			lastVersion = version
 			firstRun = false
+		}
+		if _, ok := highestMajor[version.Major]; !ok {
+			highestMajor[version.Major] = version
+		}
+		highestMinorKey := fmt.Sprintf("%d.%d", version.Major, version.Minor)
+		if _, ok := highestMinor[highestMinorKey]; !ok {
+			highestMinor[highestMinorKey] = version
 		}
 
 		if lastVersion.Major != version.Major || lastVersion.Minor != version.Minor {
@@ -70,58 +80,76 @@ func checkVersion() {
 			lastVersions = append(lastVersions, version)
 		}
 		lastVersion = version
+
+		if highestMajor[version.Major].LT(version) {
+			highestMajor[version.Major] = version
+		}
+		if highestMinor[highestMinorKey].LT(version) {
+			highestMinor[highestMinorKey] = version
+		}
 	}
 	logrus.Info("last version of each major", lastVersions)
 
-	// Remove all tags which are published on docker
-	tags, err := getTags()
-	for _, tag := range tags {
-		tagVersion, err := semver.Make(tag.Name)
+	buildinfo := BuildInfo{
+		Versions: map[string]BuildInfoVersion{},
+	}
+	stableFound := false
+	checks := checksums{}
+	for _, v := range lastVersions {
+		minorKey := fmt.Sprintf("%d.%d", v.Major, v.Minor)
+
+		// stable version exists and was not found in previous records
+		if !stableFound && stableVersion != nil && v.LT(*stableVersion) {
+			checksum, err := checks.getChecksum(*stableVersion)
+			if err != nil {
+				logrus.Panicln(err)
+			}
+			version := BuildInfoVersion{
+				SHA1: checksum,
+				Tags: []string{
+					v.String(),
+					"stable",
+				},
+			}
+			buildinfo.Versions[(*stableVersion).String()] = version
+		}
+
+		checksum, err := checks.getChecksum(v)
 		if err != nil {
-			continue
+			logrus.Panicln(err)
 		}
-		for i, version := range lastVersions {
-			if version.String() == tag.Name {
-				lastVersions = append(lastVersions[:i], lastVersions[i+1:]...)
-			}
+		version := BuildInfoVersion{
+			SHA1: checksum,
+			Tags: []string{
+				v.String(),
+			},
 		}
-
-		key := fmt.Sprintf("%d.%d", tagVersion.Major, tagVersion.Minor)
-		if val, ok := latestVersionProceeded[key]; ok {
-			if val == tagVersion.String() {
-				logrus.Info("Delete ", tagVersion.String(), " from latest proceeded")
-				delete(latestVersionProceeded, key)
-			}
+		if highestMajor[v.Major].EQ(v) {
+			version.Tags = append(version.Tags, fmt.Sprintf("%d", v.Major))
 		}
+		if highestMinor[minorKey].EQ(v) {
+			version.Tags = append(version.Tags, minorKey)
+		}
+		if v.EQ(lastVersion) {
+			version.Tags = append(version.Tags, "latest")
+		}
+		if stableVersion != nil && v.EQ(*stableVersion) {
+			version.Tags = append(version.Tags, "stable")
+			stableFound = true
+		}
+		buildinfo.Versions[v.String()] = version
 	}
 
-	for _, version := range lastVersions {
-		if version.Major == 0 && version.Minor < 16 {
-			continue
-		}
-		key := fmt.Sprintf("%d.%d", version.Major, version.Minor)
-
-		logrus.Info(latestVersionProceeded)
-		if val, ok := latestVersionProceeded[key]; ok {
-			logrus.Info("OK ", val)
-			if val == version.String() {
-				logrus.Info("Version exists in cache SKIP")
-				continue
-			}
-		}
-
-		updateVersion(version)
-	}
+	updateVersion(buildinfo)
 }
 
-func updateVersion(version semver.Version) {
-	logrus.Info("Start ", version.String())
-	latestVersionProceeded[fmt.Sprintf("%d.%d", version.Major, version.Minor)] = version.String()
-	pathRepo := fmt.Sprintf("/tmp/factorio-%s-repo", version)
+func updateVersion(buildinfo BuildInfo) {
+	logrus.Info("Start ", buildinfo)
+	pathRepo := "/tmp/factorio-repo"
 
-	defer func() {
-		noticeDiscord(version)
-	}()
+	//defer func() {
+	//	noticeDiscord(version)
+	//}()
 
 	err := gitCloneRepo(pathRepo)
 	if err != nil {
@@ -136,24 +164,19 @@ func updateVersion(version semver.Version) {
 	//}
 	//logrus.Info("Checkout branch ", version)
 
-	checksum, err := factorioGetChecksum(fmt.Sprintf("https://www.factorio.com/get-download/%s/headless/linux64", version))
-	if err != nil {
-		logrus.Panic(err)
-	}
-	logrus.Info("Got checksum ", checksum)
+	//err = editReadme(pathRepo, buildinfo)
+	//if err != nil {
+	//	logrus.Panic(err)
+	//}
+	//logrus.Info("Edited README")
 
-	err = editDockerfile(pathRepo, version, checksum)
-	if err != nil {
-		logrus.Panic(err)
-	}
-	logrus.Info("Edited Dockerfile")
-	err = editReadme(pathRepo, version)
+	err = editBuildinfo(pathRepo, buildinfo)
 	if err != nil {
 		logrus.Panic(err)
 	}
 	logrus.Info("Edited README")
 
-	err = gitCreateCommit(pathRepo, "Update to Factorio "+version.String())
+	err = gitCreateCommit(pathRepo, "Update to Factorio version")
 	if err != nil && strings.Contains(err.Error(), "nothing to commit, working tree clean") {
 		logrus.Warnln("nothing to commit, working tree clean")
 		return
@@ -168,11 +191,11 @@ func updateVersion(version semver.Version) {
 	}
 	logrus.Info("Pushed")
 
-	err = gitTagAndPush(pathRepo, version.String())
-	if err != nil {
-		logrus.Panic(err)
-	}
-	logrus.Info("Tagged")
+	//err = gitTagAndPush(pathRepo, version.String())
+	//if err != nil {
+	//	logrus.Panic(err)
+	//}
+	//logrus.Info("Tagged")
 
 	//createPullRequest(version, "update-"+version.String())
 }

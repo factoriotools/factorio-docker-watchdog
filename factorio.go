@@ -4,6 +4,7 @@ import (
 	"crypto/sha1"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
 	"time"
@@ -20,6 +21,10 @@ func factorioGetChecksum(url string) (string, error) {
 		return returnSHA1String, err
 	}
 	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return "", errors.New(resp.Status)
+	}
 
 	_, err = io.Copy(hash, resp.Body)
 	if err != nil {
