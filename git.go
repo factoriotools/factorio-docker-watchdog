@@ -9,6 +9,8 @@ import (
 	"os/exec"
 	"regexp"
 
+	"github.com/sirupsen/logrus"
+
 	"github.com/blang/semver"
 )
 
@@ -34,7 +36,8 @@ func gitSetupCredentials() error {
 }
 
 func gitCloneRepo(path string) error {
-	cmd := exec.Command("git", "clone", fmt.Sprintf("https://%s:%s@github.com/%s/%s.git", os.Getenv("GITHUB_USER"), os.Getenv("GITHUB_TOKEN"), githubRepoOwner, githubRepoName), path)
+	logrus.Debugln("git clone", fmt.Sprintf("https://github.com/%s/%s.git", githubRepoOwner, githubRepoName))
+	cmd := exec.Command("git", "clone", fmt.Sprintf("https://%s:%s@github.com/%s/%s.git", githubUser, githubToken, githubRepoOwner, githubRepoName), path)
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		return errors.New(string(output))
@@ -53,17 +56,30 @@ func gitCheckoutBranch(path string, branch string) error {
 }
 
 func gitCreateCommit(path string, commitMessage string) error {
-	cmd := exec.Command("git", "commit", "-am", commitMessage)
+	logrus.Debugln("git add")
+	cmd := exec.Command("git", "add", ".")
 	cmd.Dir = path
 	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return errors.New(string(output))
+	}
+
+	logrus.Debugln("git commit", commitMessage)
+	cmd = exec.Command("git", "commit", "-am", commitMessage)
+	cmd.Dir = path
+	output, err = cmd.CombinedOutput()
 	if err != nil {
 		return errors.New(string(output))
 	}
 	return nil
 }
 
-func gitPush(path string) error {
-	cmd := exec.Command("git", "push")
+func gitPush(path string, branch string) error {
+	args := []string{"push"}
+	if branch != "" {
+		args = append(args, "--set-upstream", "origin", branch)
+	}
+	cmd := exec.Command("git", args...)
 	cmd.Dir = path
 	output, err := cmd.CombinedOutput()
 	if err != nil {
@@ -140,11 +156,12 @@ func editReadme(path string, version semver.Version) error {
 }
 
 func editBuildinfo(path string, buildinfo BuildInfo) error {
-	b, err := json.MarshalIndent(buildinfo.Versions, "", "  ")
+	f, err := os.OpenFile(path+"/buildinfo.json", os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0644)
 	if err != nil {
 		return err
 	}
 
-	err = ioutil.WriteFile(path+"/buildinfo.json", b, 0666)
-	return err
+	encoder := json.NewEncoder(f)
+	encoder.SetIndent("", "  ")
+	return encoder.Encode(buildinfo.Versions)
 }

@@ -16,6 +16,8 @@ func main() {
 		logrus.Panic(err)
 	}
 
+	logrus.SetLevel(logrus.DebugLevel)
+
 	checkVersion()
 	c := cron.New()
 	c.AddFunc("@every 5m", func() { checkVersion() })
@@ -158,11 +160,11 @@ func updateVersion(buildinfo BuildInfo) {
 	defer os.RemoveAll(pathRepo)
 	logrus.Info("Cloned repo")
 
-	//err = gitCheckoutBranch(pathRepo, "update-"+version.String())
-	//if err != nil {
-	//	logrus.Panic(err)
-	//}
-	//logrus.Info("Checkout branch ", version)
+	err = gitCheckoutBranch(pathRepo, "update-buildinfo")
+	if err != nil {
+		logrus.Panic(err)
+	}
+	logrus.Info("Checkout branch")
 
 	//err = editReadme(pathRepo, buildinfo)
 	//if err != nil {
@@ -174,7 +176,7 @@ func updateVersion(buildinfo BuildInfo) {
 	if err != nil {
 		logrus.Panic(err)
 	}
-	logrus.Info("Edited README")
+	logrus.Info("Edited Buildinfo")
 
 	err = gitCreateCommit(pathRepo, "Update to Factorio version")
 	if err != nil && strings.Contains(err.Error(), "nothing to commit, working tree clean") {
@@ -185,7 +187,7 @@ func updateVersion(buildinfo BuildInfo) {
 	}
 	logrus.Info("Committed")
 
-	err = gitPush(pathRepo)
+	err = gitPush(pathRepo, "update-buildinfo")
 	if err != nil {
 		logrus.Panic(err)
 	}

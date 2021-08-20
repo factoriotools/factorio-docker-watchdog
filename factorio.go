@@ -8,10 +8,14 @@ import (
 	"io"
 	"net/http"
 	"time"
+
+	"github.com/sirupsen/logrus"
 )
 
 func factorioGetChecksum(url string) (string, error) {
 	var returnSHA1String string
+
+	logrus.Debugln("downloading", url, "for checksum check")
 
 	//Open a new SHA1 hash interface to write to
 	hash := sha1.New()
@@ -22,7 +26,9 @@ func factorioGetChecksum(url string) (string, error) {
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
+	if resp.StatusCode == http.StatusNotFound {
+		return "", nil
+	} else if resp.StatusCode != http.StatusOK {
 		return "", errors.New(resp.Status)
 	}
 
@@ -36,6 +42,8 @@ func factorioGetChecksum(url string) (string, error) {
 
 	//Convert the bytes to a string
 	returnSHA1String = hex.EncodeToString(hashInBytes)
+
+	logrus.Debugln("got checksum", returnSHA1String)
 
 	return returnSHA1String, nil
 }

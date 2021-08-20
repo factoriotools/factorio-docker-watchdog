@@ -69,6 +69,9 @@ func (c *checksums) getChecksum(version semver.Version) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	if checksum == "" {
+		return "", nil
+	}
 
 	c.sha1[version.String()] = checksum
 
