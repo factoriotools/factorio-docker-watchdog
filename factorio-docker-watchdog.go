@@ -166,11 +166,11 @@ func updateVersion(buildinfo BuildInfo) {
 	}
 	logrus.Info("Checkout branch")
 
-	//err = editReadme(pathRepo, buildinfo)
-	//if err != nil {
-	//	logrus.Panic(err)
-	//}
-	//logrus.Info("Edited README")
+	err = editReadme(pathRepo, buildinfo)
+	if err != nil {
+		logrus.Panic(err)
+	}
+	logrus.Info("Edited README")
 
 	err = editBuildinfo(pathRepo, buildinfo)
 	if err != nil {

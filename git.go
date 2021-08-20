@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -8,10 +9,17 @@ import (
 	"os"
 	"os/exec"
 	"regexp"
+	"sort"
+	"strings"
 
 	"github.com/sirupsen/logrus"
 
 	"github.com/blang/semver"
+)
+
+const (
+	templateTagsPrefix = "<!-- start autogeneration tags -->"
+	templateTagsSuffix = "<!-- end autogeneration tags -->"
 )
 
 var (
@@ -134,20 +142,37 @@ func editDockerfile(path string, version semver.Version, checksum string) error 
 	return nil
 }
 
-func editReadme(path string, version semver.Version) error {
+func editReadme(path string, version BuildInfo) error {
 	file, err := ioutil.ReadFile(path + "/README.md")
 	if err != nil {
 		return err
 	}
 
-	reReadmeVersion, err := regexp.Compile(fmt.Sprintf("(`)%d\\.%d\\.\\d+(`)", version.Major, version.Minor))
-	if err != nil {
-		return err
+	startIndex := bytes.Index(file, []byte(templateTagsPrefix))
+	endIndex := bytes.Index(file, []byte(templateTagsSuffix))
+	if startIndex == -1 || endIndex == -1 {
+		return errors.New("unable to find start or end tags in README.md")
 	}
 
-	file = reReadmeVersion.ReplaceAll(file, []byte("${1}"+version.String()+"${2}"))
+	var versions []string
+	for k := range version.Versions {
+		versions = append(versions, k)
+	}
+	sort.Sort(sort.Reverse(sort.StringSlice(versions)))
 
-	err = ioutil.WriteFile(path+"/README.md", file, 0666)
+	generatedTags := ""
+	for _, v := range versions {
+		tags := make([]string, len(version.Versions[v].Tags))
+		for i, tag := range version.Versions[v].Tags {
+			tags[i] = fmt.Sprintf("`%s`", tag)
+		}
+
+		generatedTags += fmt.Sprintf("* %s\n", strings.Join(tags, ", "))
+	}
+
+	content := string(file[:startIndex]) + templateTagsPrefix + "\n" + generatedTags + string(file[endIndex:])
+
+	err = ioutil.WriteFile(path+"/README.md", []byte(content), 0666)
 	if err != nil {
 		return err
 	}
