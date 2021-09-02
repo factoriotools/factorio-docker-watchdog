@@ -109,7 +109,6 @@ func checkVersion() {
 			version := BuildInfoVersion{
 				SHA1: checksum,
 				Tags: []string{
-					v.String(),
 					"stable",
 				},
 			}
