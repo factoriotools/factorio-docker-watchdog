@@ -107,20 +107,26 @@ func checkVersion() {
 			if err != nil {
 				logrus.Panicln(err)
 			}
-			version := BuildInfoVersion{
-				SHA1: checksum,
-				Tags: []string{
-					stableVersion.String(),
-					"stable",
-				},
+			if checksum != "" {
+				version := BuildInfoVersion{
+					SHA1: checksum,
+					Tags: []string{
+						stableVersion.String(),
+						"stable",
+					},
+				}
+				buildinfo.Versions[stableVersion.String()] = version
 			}
-			buildinfo.Versions[stableVersion.String()] = version
 		}
 
 		checksum, err := checks.getChecksum(v)
 		if err != nil {
 			logrus.Panicln(err)
 		}
+		if checksum == "" {
+			continue
+		}
+
 		version := BuildInfoVersion{
 			SHA1: checksum,
 			Tags: []string{
