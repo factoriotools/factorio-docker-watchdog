@@ -18,3 +18,4 @@
 # IDE
 .idea/
 factorio-docker-watchdog
+factorio-checksums.json

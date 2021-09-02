@@ -14,14 +14,16 @@ import (
 )
 
 var (
+	githubUser      = os.Getenv("GITHUB_USER")
+	githubToken     = os.Getenv("GITHUB_TOKEN")
 	githubRepoOwner = os.Getenv("GITHUB_REPO_OWNER") // current organization factoriotools
-	githubRepoName  = os.Getenv("GITHUB_REPO_NAME") // current repo factorio-docker
+	githubRepoName  = os.Getenv("GITHUB_REPO_NAME")  // current repo factorio-docker
 )
 
 func createPullRequest(version semver.Version, branch string) {
 	ctx := context.Background()
 	ts := oauth2.StaticTokenSource(
-		&oauth2.Token{AccessToken: os.Getenv("GITHUB_TOKEN")},
+		&oauth2.Token{AccessToken: githubToken},
 	)
 	tc := oauth2.NewClient(ctx, ts)
 
