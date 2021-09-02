@@ -62,7 +62,7 @@ func (c *checksums) saveChecksums() error {
 func (c *checksums) getChecksum(version semver.Version) (string, error) {
 	c.loadChecksums()
 	checksum, ok := c.sha1[version.String()]
-	if ok {
+	if ok && checksum != "" {
 		return checksum, nil
 	}
 
