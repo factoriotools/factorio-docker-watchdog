@@ -160,11 +160,11 @@ func updateVersion(buildinfo BuildInfo) {
 	defer os.RemoveAll(pathRepo)
 	logrus.Info("Cloned repo")
 
-	err = gitCheckoutBranch(pathRepo, "update-buildinfo")
-	if err != nil {
-		logrus.Panic(err)
-	}
-	logrus.Info("Checkout branch")
+	//err = gitCheckoutBranch(pathRepo, "update-buildinfo")
+	//if err != nil {
+	//	logrus.Panic(err)
+	//}
+	//logrus.Info("Checkout branch")
 
 	err = editReadme(pathRepo, buildinfo)
 	if err != nil {
@@ -187,7 +187,7 @@ func updateVersion(buildinfo BuildInfo) {
 	}
 	logrus.Info("Committed")
 
-	err = gitPush(pathRepo, "update-buildinfo")
+	err = gitPush(pathRepo, "")
 	if err != nil {
 		logrus.Panic(err)
 	}

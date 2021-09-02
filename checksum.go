@@ -5,14 +5,13 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"path"
 
 	"github.com/blang/semver"
 
 	"github.com/sirupsen/logrus"
 )
 
-var checksumsFile = path.Join("/usr/watchdog/factorio-checksums.json")
+const checksumsFile = "/usr/watchdog/factorio-checksums.json"
 
 type checksums struct {
 	sha1   map[string]string
@@ -50,7 +49,9 @@ func (c *checksums) saveChecksums() error {
 	}
 	defer f.Close()
 
-	err = json.NewEncoder(f).Encode(c.sha1)
+	encoder := json.NewEncoder(f)
+	encoder.SetIndent("", "  ")
+	err = encoder.Encode(c.sha1)
 	if err != nil {
 		return err
 	}
