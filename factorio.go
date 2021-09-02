@@ -1,7 +1,7 @@
 package main
 
 import (
-	"crypto/sha1"
+	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -13,16 +13,16 @@ import (
 )
 
 func factorioGetChecksum(url string) (string, error) {
-	var returnSHA1String string
+	checksum := ""
 
 	logrus.Debugln("downloading", url, "for checksum check")
 
-	//Open a new SHA1 hash interface to write to
-	hash := sha1.New()
+	//Open a new SHA256 hash interface to write to
+	hash := sha256.New()
 
 	resp, err := http.Get(url)
 	if err != nil {
-		return returnSHA1String, err
+		return checksum, err
 	}
 	defer resp.Body.Close()
 
@@ -34,18 +34,18 @@ func factorioGetChecksum(url string) (string, error) {
 
 	_, err = io.Copy(hash, resp.Body)
 	if err != nil {
-		return returnSHA1String, err
+		return checksum, err
 	}
 
 	//Get the 20 bytes hash
 	hashInBytes := hash.Sum(nil)[:20]
 
 	//Convert the bytes to a string
-	returnSHA1String = hex.EncodeToString(hashInBytes)
+	checksum = hex.EncodeToString(hashInBytes)
 
-	logrus.Debugln("got checksum", returnSHA1String)
+	logrus.Debugln("got checksum", checksum)
 
-	return returnSHA1String, nil
+	return checksum, nil
 }
 
 var myClient = &http.Client{Timeout: 10 * time.Second}

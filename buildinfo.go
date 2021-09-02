@@ -5,6 +5,6 @@ type BuildInfo struct {
 }
 
 type BuildInfoVersion struct {
-	SHA1 string   `json:"sha1"`
-	Tags []string `json:"tags"`
+	SHA256 string   `json:"sha256"`
+	Tags   []string `json:"tags"`
 }
