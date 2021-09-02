@@ -37,8 +37,8 @@ func factorioGetChecksum(url string) (string, error) {
 		return checksum, err
 	}
 
-	//Get the 20 bytes hash
-	hashInBytes := hash.Sum(nil)[:20]
+	//Get the 32 bytes hash
+	hashInBytes := hash.Sum(nil)
 
 	//Convert the bytes to a string
 	checksum = hex.EncodeToString(hashInBytes)
