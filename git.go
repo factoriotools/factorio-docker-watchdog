@@ -96,16 +96,6 @@ func gitPush(path string, branch string) error {
 	return nil
 }
 
-func gitPushBranch(path string, branch string) error {
-	cmd := exec.Command("git", "push", "--set-upstream", "origin", branch)
-	cmd.Dir = path
-	output, err := cmd.CombinedOutput()
-	if err != nil {
-		return errors.New(string(output))
-	}
-	return nil
-}
-
 func gitTagAndPush(path string, tagName string) error {
 	cmd := exec.Command("git", "tag", tagName)
 	cmd.Dir = path

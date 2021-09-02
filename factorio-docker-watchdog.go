@@ -54,7 +54,7 @@ func checkVersion() {
 		}
 	}
 	semver.Sort(versions)
-	logrus.Debug("Available versions from Factorio.com ", versions)
+	logrus.Debug("Available versions from factorio.com ", versions)
 
 	// Filter only latest version based on minor
 	var lastVersion semver.Version
@@ -90,7 +90,8 @@ func checkVersion() {
 			highestMinor[highestMinorKey] = version
 		}
 	}
-	logrus.Info("last version of each major", lastVersions)
+	logrus.Infoln("last version", lastVersion)
+	logrus.Infoln("last version of each major", lastVersions)
 
 	buildinfo := BuildInfo{
 		Versions: map[string]BuildInfoVersion{},
