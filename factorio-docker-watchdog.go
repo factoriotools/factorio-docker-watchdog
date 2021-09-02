@@ -109,10 +109,11 @@ func checkVersion() {
 			version := BuildInfoVersion{
 				SHA1: checksum,
 				Tags: []string{
+					stableVersion.String(),
 					"stable",
 				},
 			}
-			buildinfo.Versions[(*stableVersion).String()] = version
+			buildinfo.Versions[stableVersion.String()] = version
 		}
 
 		checksum, err := checks.getChecksum(v)
