@@ -14,7 +14,7 @@ import (
 const checksumsFile = "/usr/watchdog/factorio-checksums.json"
 
 type checksums struct {
-	sha1   map[string]string
+	sha256 map[string]string
 	loaded bool
 }
 
@@ -23,7 +23,7 @@ func (c *checksums) loadChecksums() {
 		return
 	}
 
-	c.sha1 = map[string]string{}
+	c.sha256 = map[string]string{}
 
 	f, err := os.Open(checksumsFile)
 	if err != nil && errors.Is(err, os.ErrNotExist) {
@@ -31,7 +31,7 @@ func (c *checksums) loadChecksums() {
 		return
 	}
 
-	err = json.NewDecoder(f).Decode(&c.sha1)
+	err = json.NewDecoder(f).Decode(&c.sha256)
 	if err != nil {
 		logrus.Errorln(err)
 	}
@@ -51,7 +51,7 @@ func (c *checksums) saveChecksums() error {
 
 	encoder := json.NewEncoder(f)
 	encoder.SetIndent("", "  ")
-	err = encoder.Encode(c.sha1)
+	err = encoder.Encode(c.sha256)
 	if err != nil {
 		return err
 	}
@@ -61,7 +61,7 @@ func (c *checksums) saveChecksums() error {
 
 func (c *checksums) getChecksum(version semver.Version) (string, error) {
 	c.loadChecksums()
-	checksum, ok := c.sha1[version.String()]
+	checksum, ok := c.sha256[version.String()]
 	if ok && checksum != "" {
 		return checksum, nil
 	}
@@ -74,7 +74,7 @@ func (c *checksums) getChecksum(version semver.Version) (string, error) {
 		return "", nil
 	}
 
-	c.sha1[version.String()] = checksum
+	c.sha256[version.String()] = checksum
 
 	err = c.saveChecksums()
 	if err != nil {

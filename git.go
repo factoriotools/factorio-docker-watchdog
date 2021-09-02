@@ -24,7 +24,7 @@ const (
 
 var (
 	reDockerfileVersion = regexp.MustCompile(`(VERSION=)(\d+\.\d+\.\d+)`)
-	reDockerfileSHA1    = regexp.MustCompile(`(SHA1=)([a-z0-9]+)`)
+	reDockerfileSHA256  = regexp.MustCompile(`(SHA256=)([a-z0-9]+)`)
 )
 
 func gitSetupCredentials() error {
@@ -122,7 +122,7 @@ func editDockerfile(path string, version semver.Version, checksum string) error 
 		return err
 	}
 	file = reDockerfileVersion.ReplaceAll(file, []byte("${1}"+version.String()))
-	file = reDockerfileSHA1.ReplaceAll(file, []byte("${1}"+checksum))
+	file = reDockerfileSHA256.ReplaceAll(file, []byte("${1}"+checksum))
 
 	err = ioutil.WriteFile(filename, file, 0666)
 	if err != nil {
